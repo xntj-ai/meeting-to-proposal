@@ -1,0 +1,252 @@
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>meeting-to-proposal · 一次客户访谈,十几分钟变完整提案</title>
+<meta name="description" content="meeting-to-proposal 是一个 Claude Code 技能:把一次客户访谈(音频/会议记录)端到端跑成一份完整提案网页 —— 13 维度商业画布 + 5 维度个人 IP 定位 + 5 维度内容选题库,自动切段 ASR、多智能体调研、隐去客户名称。">
+<link rel="canonical" href="https://xntj-ai.github.io/meeting-to-proposal/index.zh.html">
+<link rel="alternate" hreflang="en" href="https://xntj-ai.github.io/meeting-to-proposal/">
+<link rel="alternate" hreflang="zh-Hans" href="https://xntj-ai.github.io/meeting-to-proposal/index.zh.html">
+<link rel="alternate" hreflang="x-default" href="https://xntj-ai.github.io/meeting-to-proposal/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="meeting-to-proposal · 一次客户访谈,十几分钟变完整提案">
+<meta property="og:description" content="把一次客户访谈端到端跑成完整提案网页 —— 商业画布 + 个人 IP 定位 + 内容选题库。Claude Code 技能。">
+<meta property="og:locale" content="zh_CN">
+<style>
+:root{
+  --bg:#FAF8F4; --surf:#FFFFFF; --line:#ECE6DC; --line2:#E2DACB;
+  --ink:#2A2722; --ink2:#6B6356; --mut:#9A9082;
+  --gold:#C8922E; --gold2:#F0B24A; --jade:#1f6f5c; --terra:#B4502E; --blue:#3E6B8C;
+  --r:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,system-ui,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;letter-spacing:.1px}
+a{color:var(--gold);text-decoration:none} a:hover{text-decoration:underline}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 28px 90px}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;font-weight:740;font-size:16px;letter-spacing:-.2px}
+.brand .tag{font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--gold);
+  background:#FAF1DF;border:1px solid #EBD9B6;padding:2px 9px;border-radius:20px;text-transform:uppercase}
+.nav{display:flex;align-items:center;gap:16px;font-size:13.5px;color:var(--ink2)}
+.nav .lang{color:var(--mut)} .nav .lang b{color:var(--ink)}
+
+/* hero */
+.kicker{font-size:12.5px;letter-spacing:2.5px;color:var(--gold);font-weight:700;text-transform:uppercase}
+h1{font-size:38px;line-height:1.18;letter-spacing:-.6px;margin:14px 0 12px;font-weight:790}
+.lead{color:var(--ink2);font-size:17px;max-width:760px;margin:0}
+.intro{color:var(--ink2);font-size:15.5px;max-width:800px;margin:18px 0 0}
+
+h2{font-size:23px;letter-spacing:-.3px;margin:62px 0 6px;font-weight:730;display:flex;align-items:center;gap:11px}
+h2 .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);flex:none}
+.sub{color:var(--ink2);font-size:14.5px;margin:0 0 4px}
+.note{color:var(--mut);font-size:13px;margin-top:12px;line-height:1.6}
+b{font-weight:680}
+code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+  background:#F3EEE5;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--terra)}
+
+/* pipeline flow */
+.flow{display:flex;align-items:stretch;gap:10px;margin-top:26px;flex-wrap:wrap}
+.fstep{flex:1;min-width:158px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 17px;position:relative;box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.fstep .fk{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.fstep h4{margin:8px 0 6px;font-size:15.5px;font-weight:730;letter-spacing:-.2px}
+.fstep p{margin:0;font-size:13px;color:var(--ink2);line-height:1.55}
+.fstep.fin{border-color:#E6C98A;background:linear-gradient(180deg,#FFFDF8,#FFF)}
+.fstep.fin .fk{color:var(--gold)}
+.farr{display:flex;align-items:center;color:#CDB892;font-size:22px;font-weight:400;flex:none;padding:0 2px}
+@media(max-width:720px){.farr{transform:rotate(90deg);align-self:center;padding:3px 0}.fstep{min-width:100%}.flow{flex-direction:column}}
+
+/* shapes */
+.shapes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.shape{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;text-align:center;
+  box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.shape svg{display:block;margin:0 auto 14px}
+.shape .sn{font-size:15px;font-weight:730} .shape .se{font-size:12.5px;color:var(--mut);letter-spacing:.5px}
+.shape p{margin:8px 0 0;font-size:13px;color:var(--ink2);line-height:1.55}
+.variants{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.vchip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2);
+  background:var(--surf);border:1px solid var(--line);border-radius:20px;padding:5px 12px}
+.vdot{width:10px;height:10px;border-radius:50%;flex:none}
+@media(max-width:720px){.shapes{grid-template-columns:1fr}}
+
+/* architecture */
+.arch{margin-top:24px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:26px 24px;
+  box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.archcdn{max-width:360px;margin:0 auto;text-align:center;border:1px dashed var(--line2);border-radius:12px;
+  padding:11px 14px;font-size:13px;color:var(--ink2);background:#FBF8F2}
+.archcdn b{color:var(--ink)}
+.archpipe{width:1px;height:26px;background:var(--line2);margin:0 auto;position:relative}
+.archpipe::after{content:"▼";position:absolute;left:-6px;bottom:-4px;color:#CDB892;font-size:11px}
+.archfile{border:1.5px solid var(--gold);border-radius:14px;padding:8px 8px 14px;background:#FFFDF8;max-width:560px;margin:0 auto;position:relative}
+.archfile .ft{display:inline-block;font-size:12px;font-weight:720;color:var(--gold);background:#FFFDF8;
+  padding:0 10px;position:relative;top:-18px;left:8px;letter-spacing:.3px}
+.archrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:-6px;padding:0 8px}
+.archbox{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+.archbox .bk{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.archbox h4{margin:5px 0 4px;font-size:14px;font-weight:720} .archbox p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.archnote{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.anote{font-size:12.5px;color:var(--jade);background:#E3EFE9;border:1px solid #CDE5DB;border-radius:20px;padding:4px 13px;font-weight:600}
+@media(max-width:720px){.archrow{grid-template-columns:1fr}}
+
+/* feature cards */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:24px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:22px 22px 20px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold)}
+.card h3{margin:0 0 8px;font-size:16.5px;font-weight:730;letter-spacing:-.2px}
+.card p{margin:0;color:var(--ink2);font-size:14px}
+@media(max-width:720px){.cards{grid-template-columns:1fr}}
+
+/* two panels */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px;align-items:start}
+.panel{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:22px;box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.panel .pk{font-size:11.5px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
+.panel.ok .pk{color:var(--jade)} .panel.no .pk{color:var(--terra)}
+.panel h3{margin:6px 0 0;font-size:16px;font-weight:730}
+.panel ul{margin:12px 0 0;padding-left:18px;color:var(--ink2);font-size:14px} .panel li{margin:6px 0}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+
+/* quick start */
+.steps{counter-reset:s;margin-top:24px;display:grid;gap:12px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start;background:var(--surf);
+  border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.step::before{counter-increment:s;content:counter(s);width:28px;height:28px;border-radius:50%;
+  background:#FAF1DF;border:1px solid #EBD9B6;color:var(--gold);font-weight:760;font-size:14px;
+  display:flex;align-items:center;justify-content:center}
+.step>div{min-width:0} .step h4{margin:2px 0 4px;font-size:15px;font-weight:720} .step p{margin:0;font-size:13.5px;color:var(--ink2)}
+pre{background:#2A2722;color:#F3EEE5;border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.5px;
+  font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;line-height:1.6;margin:8px 0 0}
+
+footer{margin-top:74px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--line);padding-top:22px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--ink2)}
+</style></head><body><div class="wrap">
+
+<div class="topbar">
+  <div class="brand">meeting-to-proposal <span class="tag">Claude Code 技能</span></div>
+  <div class="nav">
+    <span class="lang"><b>中文</b> · <a href="./index.html">English</a></span>
+    <a href="https://github.com/xntj-ai/meeting-to-proposal">GitHub ↗</a>
+  </div>
+</div>
+
+<div class="kicker">访谈 → 提案 · 端到端编排</div>
+<h1>一次客户访谈,<br>十几分钟变成完整提案</h1>
+<p class="lead">meeting-to-proposal 是一个 Claude Code 技能。给它一次客户访谈 —— 音频或会议记录 —— 它就<b>端到端</b>跑成一份可交付的提案网页:13 维度商业画布、5 维度个人 IP 定位、5 维度内容选题库。</p>
+<p class="intro">它是一个 orchestrator:把录音切段转写、组织一支多智能体调研团队,再调用三个子技能分别撰写每一部分,最后合成一个隐去客户名称的 HTML 页面。沉淀自「张拼拼·XNTJ」<a href="https://xntj.tv/ep/live-ep0013/">EP0013 AI 帮我拿单子</a> 的一次实战:一场 2.5 小时的新加坡客户访谈,约十分钟出一份完整提案。它的核心是<b>思路</b>而不是工具绑定。</p>
+
+<h2><span class="dot"></span>三段流水线</h2>
+<p class="sub">从一段客户访谈,到一份隐去客户名的提案,中间是这条管线。</p>
+<div class="flow">
+  <div class="fstep"><div class="fk">输入</div><h4>客户访谈</h4><p>访谈音频 +(可选)会议软件自带逐字稿。音频用更强模型重识别,逐字稿留下姓名与时间戳。</p></div>
+  <div class="farr">→</div>
+  <div class="fstep"><div class="fk">抽取</div><h4>结构化</h4><p>切段 ASR 转写,再由多智能体团队调研,把散乱的对话抽成可分析的字段。</p></div>
+  <div class="farr">→</div>
+  <div class="fstep"><div class="fk">撰写</div><h4>调三个子技能</h4><p>business-canvas、personal-ip-positioning、content-topic-design 各写一部分。</p></div>
+  <div class="farr">→</div>
+  <div class="fstep fin"><div class="fk">产出</div><h4>提案网页</h4><p>四区块合成一个 HTML,自动隐去客户名称,直接交付。</p></div>
+</div>
+<p class="note">最佳输入是<b>音频 + 逐字稿一起给</b> —— 逐字稿哪怕只有 60-70% 准确率,也保住了参会人姓名和时间戳;音频则让技能重新识别一遍。</p>
+
+<h2><span class="dot"></span>提案的章节结构</h2>
+<p class="sub">三个子技能各自负责一块,合成页面里是四个核心区块。</p>
+<div class="shapes">
+  <div class="shape">
+    <svg width="132" height="74" viewBox="0 0 132 74">
+      <rect x="14" y="8" width="104" height="58" rx="9" fill="#fff" stroke="#C8922E" stroke-width="1.6"/>
+      <line x1="26" y1="22" x2="106" y2="22" stroke="#E2DACB" stroke-width="2.4"/>
+      <line x1="26" y1="33" x2="106" y2="33" stroke="#E2DACB" stroke-width="2.4"/>
+      <line x1="26" y1="44" x2="106" y2="44" stroke="#E2DACB" stroke-width="2.4"/>
+      <line x1="26" y1="55" x2="80" y2="55" stroke="#E2DACB" stroke-width="2.4"/>
+      <circle cx="66" cy="37" r="11" fill="#FAF1DF" stroke="#C8922E" stroke-width="1.4"/>
+      <text x="66" y="41" font-size="12" font-weight="700" fill="#C8922E" text-anchor="middle">13</text>
+    </svg>
+    <div class="sn">商业画布 <span class="se">business-canvas</span></div>
+    <p>13 个维度全填:客户的客户、痛点、规模测算、商业模式、关键假设与验证。</p>
+  </div>
+  <div class="shape">
+    <svg width="132" height="74" viewBox="0 0 132 74">
+      <polygon points="66,8 92,26 82,58 50,58 40,26" fill="#fff" stroke="#1f6f5c" stroke-width="1.6"/>
+      <text x="66" y="30" font-size="10" font-weight="700" fill="#1f6f5c" text-anchor="middle">深度</text>
+      <text x="50" y="50" font-size="10" font-weight="700" fill="#1f6f5c" text-anchor="middle">跨度</text>
+      <text x="84" y="50" font-size="10" font-weight="700" fill="#1f6f5c" text-anchor="middle">特质</text>
+    </svg>
+    <div class="sn">个人 IP 定位 <span class="se">personal-ip</span></div>
+    <p>跨界三角:深度 × 跨度 × 特质,推出「只有他能讲」的差异化角度 + 5 个长期标签。</p>
+  </div>
+  <div class="shape">
+    <svg width="132" height="74" viewBox="0 0 132 74">
+      <g fill="none" stroke="#B4502E" stroke-width="1.5">
+        <rect x="24" y="14" width="84" height="13" rx="4"/>
+        <rect x="34" y="32" width="74" height="9" rx="3" stroke-width="1.2"/>
+        <rect x="34" y="45" width="74" height="9" rx="3" stroke-width="1.2"/>
+        <line x1="28" y1="36" x2="28" y2="50"/>
+        <line x1="28" y1="36" x2="34" y2="36"/>
+        <line x1="28" y1="49" x2="34" y2="49"/>
+      </g>
+      <text x="66" y="68" font-size="10" font-weight="700" fill="#B4502E" text-anchor="middle">5 维度 × 10 选题</text>
+    </svg>
+    <div class="sn">内容选题库 <span class="se">content-topic</span></div>
+    <p>5 维度 × 约 2-3 子方向 × 每子方向 10 选题 = 一份够跑半年的选题库。</p>
+  </div>
+</div>
+<div class="variants">
+  <span class="vchip"><span class="vdot" style="background:#C8922E"></span>商业运营分析</span>
+  <span class="vchip"><span class="vdot" style="background:#1f6f5c"></span>个人 IP 定位</span>
+  <span class="vchip"><span class="vdot" style="background:#B4502E"></span>自媒体规划</span>
+  <span class="vchip"><span class="vdot" style="background:#3E6B8C"></span>关键假设与验证路径</span>
+</div>
+
+<h2><span class="dot"></span>多智能体调研</h2>
+<p class="sub">转写文本进去,四个 agent 各管一段 —— 调研聚焦,不发散。</p>
+<div class="arch">
+  <div class="archcdn"><b>客户访谈转写文本</b><br>切段 ASR + 会议背景作上下文</div>
+  <div class="archpipe"></div>
+  <div class="archfile">
+    <span class="ft">多智能体调研团队</span>
+    <div class="archrow">
+      <div class="archbox"><div class="bk">行业</div><h4>行业调研员</h4><p>宏观趋势 / 市场规模 / 竞争格局。</p></div>
+      <div class="archbox"><div class="bk">竞品</div><h4>竞品分析员</h4><p>直接竞品 / 间接竞品 / 差异化机会。</p></div>
+      <div class="archbox"><div class="bk">客户</div><h4>客户拆解员</h4><p>客户的客户 / 痛点 / 三个垂直客群。</p></div>
+      <div class="archbox"><div class="bk">数据</div><h4>数据测算员</h4><p>潜在 / 可服务 / 可获得市场(TAM·SAM·SOM)。</p></div>
+    </div>
+  </div>
+  <div class="archnote">
+    <span class="anote">结果交叉验证</span>
+    <span class="anote">不采信单一 agent</span>
+    <span class="anote">喂给三个子技能</span>
+  </div>
+</div>
+<p class="note">关键认知:整段 ASR 在 5 分钟以上会注意力塌陷(EP0013 第一次跑 24 分钟,9 分钟就崩了)。切成 7-8 分钟一段、按偏移叠加时间码合并,识别率比会议软件自带逐字稿高 20-30 个百分点。</p>
+
+<h2><span class="dot"></span>核心特性</h2>
+<div class="cards">
+  <div class="card"><h3>端到端编排</h3><p>一个技能把整条链路从原始录音一路带到成品提案网页,你不用自己拼接各步骤。</p></div>
+  <div class="card"><h3>切段 ASR</h3><p>7-8 分钟一段避开注意力塌陷,会议背景作上下文,识别率高过会议软件 20-30 个百分点。</p></div>
+  <div class="card"><h3>三个可组合子技能</h3><p>商业画布 / 个人 IP 定位 / 内容选题库,每个都能独立使用,字段表来自 EP0013 实战。</p></div>
+  <div class="card"><h3>默认脱敏</h3><p>合成页面写「一家做 XX 业务的公司」,只提业务类型,绝不点名客户。</p></div>
+</div>
+
+<h2><span class="dot"></span>适用场景</h2>
+<div class="two">
+  <div class="panel ok"><div class="pk">适合</div><h3>有访谈,要整套提案</h3>
+    <ul><li>咨询顾问 / 自由职业者 / 一人公司创始人 / BD / 售前</li><li>手上有客户访谈音频或逐字稿,想出可交付的咨询报告</li><li>要商业画布 + 个人 IP 定位 + 内容选题方案一整套</li></ul></div>
+  <div class="panel no"><div class="pk">不适合</div><h3>纯整理 / 无咨询输出</h3>
+    <ul><li>只想把逐字稿整理干净 —— 用 ASR 工具即可</li><li>不产出咨询内容的客户回访</li><li>纯 RFP 应答</li></ul></div>
+</div>
+
+<h2><span class="dot"></span>快速开始</h2>
+<div class="steps">
+  <div class="step"><div><h4>装进 Claude Code 技能目录</h4><pre>git clone https://github.com/xntj-ai/meeting-to-proposal.git ~/.claude/skills/meeting-to-proposal</pre></div></div>
+  <div class="step"><div><h4>把客户访谈扔进对话</h4><p>把音频(最好再配上会议软件逐字稿)扔进对话,说"用 meeting-to-proposal 把这次访谈做成完整提案",Claude 会自动触发并跑完 7 步编排。</p></div></div>
+  <div class="step"><div><h4>拿到隐去客户名的提案网页</h4><p>四区块合成的 HTML 直接交付。也可不经 Claude,把 <code>SKILL.md</code> 粘进任意 LLM,核心是思路不是工具。</p></div></div>
+</div>
+
+<footer>
+  <span>meeting-to-proposal · MIT License · © <a href="https://xntj.tv">张拼拼 · XNTJ</a></span>
+  <span><a href="https://github.com/xntj-ai/meeting-to-proposal">GitHub</a> · <a href="https://github.com/xntj-ai/ppvi">ppvi 设计体系</a> · <a href="./index.html">English</a></span>
+</footer>
+
+</div></body></html>

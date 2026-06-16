@@ -1,0 +1,252 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>meeting-to-proposal · One client interview into a full proposal</title>
+<meta name="description" content="meeting-to-proposal is a Claude Code skill: take a client interview (audio or transcript) and run it end to end into a complete proposal web page — a 13-dimension business canvas, 5-dimension personal IP positioning, and a 5-dimension content topic library, with chunked ASR, multi-agent research, and the client name redacted.">
+<link rel="canonical" href="https://xntj-ai.github.io/meeting-to-proposal/">
+<link rel="alternate" hreflang="en" href="https://xntj-ai.github.io/meeting-to-proposal/">
+<link rel="alternate" hreflang="zh-Hans" href="https://xntj-ai.github.io/meeting-to-proposal/index.zh.html">
+<link rel="alternate" hreflang="x-default" href="https://xntj-ai.github.io/meeting-to-proposal/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="meeting-to-proposal · One client interview into a full proposal">
+<meta property="og:description" content="Take a client interview and run it end to end into a complete proposal web page — business canvas + personal IP positioning + content topic library. A Claude Code skill.">
+<meta property="og:locale" content="en_US">
+<style>
+:root{
+  --bg:#FAF8F4; --surf:#FFFFFF; --line:#ECE6DC; --line2:#E2DACB;
+  --ink:#2A2722; --ink2:#6B6356; --mut:#9A9082;
+  --gold:#C8922E; --gold2:#F0B24A; --jade:#1f6f5c; --terra:#B4502E; --blue:#3E6B8C;
+  --r:16px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,system-ui,sans-serif;
+  font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;letter-spacing:.1px}
+a{color:var(--gold);text-decoration:none} a:hover{text-decoration:underline}
+.wrap{max-width:1080px;margin:0 auto;padding:30px 28px 90px}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding-bottom:22px;border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:11px;font-weight:740;font-size:16px;letter-spacing:-.2px}
+.brand .tag{font-size:11px;font-weight:700;letter-spacing:1.2px;color:var(--gold);
+  background:#FAF1DF;border:1px solid #EBD9B6;padding:2px 9px;border-radius:20px;text-transform:uppercase}
+.nav{display:flex;align-items:center;gap:16px;font-size:13.5px;color:var(--ink2)}
+.nav .lang{color:var(--mut)} .nav .lang b{color:var(--ink)}
+
+/* hero */
+.kicker{font-size:12.5px;letter-spacing:2.5px;color:var(--gold);font-weight:700;text-transform:uppercase}
+h1{font-size:38px;line-height:1.18;letter-spacing:-.6px;margin:14px 0 12px;font-weight:790}
+.lead{color:var(--ink2);font-size:17px;max-width:760px;margin:0}
+.intro{color:var(--ink2);font-size:15.5px;max-width:800px;margin:18px 0 0}
+
+h2{font-size:23px;letter-spacing:-.3px;margin:62px 0 6px;font-weight:730;display:flex;align-items:center;gap:11px}
+h2 .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);flex:none}
+.sub{color:var(--ink2);font-size:14.5px;margin:0 0 4px}
+.note{color:var(--mut);font-size:13px;margin-top:12px;line-height:1.6}
+b{font-weight:680}
+code{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+  background:#F3EEE5;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--terra)}
+
+/* pipeline flow */
+.flow{display:flex;align-items:stretch;gap:10px;margin-top:26px;flex-wrap:wrap}
+.fstep{flex:1;min-width:158px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 17px;position:relative;box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.fstep .fk{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.fstep h4{margin:8px 0 6px;font-size:15.5px;font-weight:730;letter-spacing:-.2px}
+.fstep p{margin:0;font-size:13px;color:var(--ink2);line-height:1.55}
+.fstep.fin{border-color:#E6C98A;background:linear-gradient(180deg,#FFFDF8,#FFF)}
+.fstep.fin .fk{color:var(--gold)}
+.farr{display:flex;align-items:center;color:#CDB892;font-size:22px;font-weight:400;flex:none;padding:0 2px}
+@media(max-width:720px){.farr{transform:rotate(90deg);align-self:center;padding:3px 0}.fstep{min-width:100%}.flow{flex-direction:column}}
+
+/* shapes */
+.shapes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.shape{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:22px 18px;text-align:center;
+  box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.shape svg{display:block;margin:0 auto 14px}
+.shape .sn{font-size:15px;font-weight:730} .shape .se{font-size:12.5px;color:var(--mut);letter-spacing:.5px}
+.shape p{margin:8px 0 0;font-size:13px;color:var(--ink2);line-height:1.55}
+.variants{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.vchip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink2);
+  background:var(--surf);border:1px solid var(--line);border-radius:20px;padding:5px 12px}
+.vdot{width:10px;height:10px;border-radius:50%;flex:none}
+@media(max-width:720px){.shapes{grid-template-columns:1fr}}
+
+/* architecture */
+.arch{margin-top:24px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:26px 24px;
+  box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.archcdn{max-width:360px;margin:0 auto;text-align:center;border:1px dashed var(--line2);border-radius:12px;
+  padding:11px 14px;font-size:13px;color:var(--ink2);background:#FBF8F2}
+.archcdn b{color:var(--ink)}
+.archpipe{width:1px;height:26px;background:var(--line2);margin:0 auto;position:relative}
+.archpipe::after{content:"▼";position:absolute;left:-6px;bottom:-4px;color:#CDB892;font-size:11px}
+.archfile{border:1.5px solid var(--gold);border-radius:14px;padding:8px 8px 14px;background:#FFFDF8;max-width:560px;margin:0 auto;position:relative}
+.archfile .ft{display:inline-block;font-size:12px;font-weight:720;color:var(--gold);background:#FFFDF8;
+  padding:0 10px;position:relative;top:-18px;left:8px;letter-spacing:.3px}
+.archrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:-6px;padding:0 8px}
+.archbox{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:13px 14px}
+.archbox .bk{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);font-weight:700}
+.archbox h4{margin:5px 0 4px;font-size:14px;font-weight:720} .archbox p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.archnote{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.anote{font-size:12.5px;color:var(--jade);background:#E3EFE9;border:1px solid #CDE5DB;border-radius:20px;padding:4px 13px;font-weight:600}
+@media(max-width:720px){.archrow{grid-template-columns:1fr}}
+
+/* feature cards */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:24px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:22px 22px 20px;position:relative;overflow:hidden;box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gold)}
+.card h3{margin:0 0 8px;font-size:16.5px;font-weight:730;letter-spacing:-.2px}
+.card p{margin:0;color:var(--ink2);font-size:14px}
+@media(max-width:720px){.cards{grid-template-columns:1fr}}
+
+/* two panels */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:24px;align-items:start}
+.panel{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);padding:22px;box-shadow:0 1px 2px rgba(42,39,34,.03)}
+.panel .pk{font-size:11.5px;letter-spacing:1.5px;font-weight:700;text-transform:uppercase}
+.panel.ok .pk{color:var(--jade)} .panel.no .pk{color:var(--terra)}
+.panel h3{margin:6px 0 0;font-size:16px;font-weight:730}
+.panel ul{margin:12px 0 0;padding-left:18px;color:var(--ink2);font-size:14px} .panel li{margin:6px 0}
+@media(max-width:720px){.two{grid-template-columns:1fr}}
+
+/* quick start */
+.steps{counter-reset:s;margin-top:24px;display:grid;gap:12px}
+.step{display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:start;background:var(--surf);
+  border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.step::before{counter-increment:s;content:counter(s);width:28px;height:28px;border-radius:50%;
+  background:#FAF1DF;border:1px solid #EBD9B6;color:var(--gold);font-weight:760;font-size:14px;
+  display:flex;align-items:center;justify-content:center}
+.step>div{min-width:0} .step h4{margin:2px 0 4px;font-size:15px;font-weight:720} .step p{margin:0;font-size:13.5px;color:var(--ink2)}
+pre{background:#2A2722;color:#F3EEE5;border-radius:10px;padding:13px 15px;overflow-x:auto;font-size:12.5px;
+  font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace;line-height:1.6;margin:8px 0 0}
+
+footer{margin-top:74px;color:var(--mut);font-size:12.5px;border-top:1px solid var(--line);padding-top:22px;
+  display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--ink2)}
+</style></head><body><div class="wrap">
+
+<div class="topbar">
+  <div class="brand">meeting-to-proposal <span class="tag">Claude Code Skill</span></div>
+  <div class="nav">
+    <span class="lang"><b>English</b> · <a href="./index.zh.html">中文</a></span>
+    <a href="https://github.com/xntj-ai/meeting-to-proposal">GitHub ↗</a>
+  </div>
+</div>
+
+<div class="kicker">Interview → proposal · End-to-end orchestration</div>
+<h1>One client interview,<br>a full proposal in minutes</h1>
+<p class="lead">meeting-to-proposal is a Claude Code skill. Hand it a client interview — audio or a meeting transcript — and it runs <b>end to end</b> into a deliverable proposal web page: a 13-dimension business canvas, a 5-dimension personal IP positioning, and a 5-dimension content topic library.</p>
+<p class="intro">It is an orchestrator: it chunks and transcribes the recording, runs a multi-agent research team, calls three sub-skills to write each part, then synthesizes one HTML page with the client name redacted. Distilled from a real run on 「张拼拼·XNTJ」 <a href="https://xntj.tv/ep/live-ep0013/">EP0013</a>: a 2.5-hour interview with a Singapore client turned into a full proposal in about ten minutes. The method is the <b>thinking</b>, not a tool lock-in.</p>
+
+<h2><span class="dot"></span>A three-stage pipeline</h2>
+<p class="sub">From a client interview to a redacted proposal — this is the line in between.</p>
+<div class="flow">
+  <div class="fstep"><div class="fk">Input</div><h4>Client interview</h4><p>Interview audio + (optional) the meeting software's transcript. Audio is re-recognized with a stronger model; the transcript keeps names and timestamps.</p></div>
+  <div class="farr">→</div>
+  <div class="fstep"><div class="fk">Extract</div><h4>Structure it</h4><p>Chunked ASR transcription, then a multi-agent team researches it — turning loose conversation into analyzable fields.</p></div>
+  <div class="farr">→</div>
+  <div class="fstep"><div class="fk">Write</div><h4>Call three sub-skills</h4><p>business-canvas, personal-ip-positioning, and content-topic-design each write one part.</p></div>
+  <div class="farr">→</div>
+  <div class="fstep fin"><div class="fk">Output</div><h4>Proposal page</h4><p>Four sections synthesized into one HTML, client name redacted, ready to hand off.</p></div>
+</div>
+<p class="note">The best input is <b>audio + transcript together</b> — the transcript keeps attendee names and timestamps even at 60–70% accuracy, while the audio lets the skill re-recognize the speech.</p>
+
+<h2><span class="dot"></span>The proposal's section architecture</h2>
+<p class="sub">Three sub-skills, each owning one block; the synthesized page has four core sections.</p>
+<div class="shapes">
+  <div class="shape">
+    <svg width="132" height="74" viewBox="0 0 132 74">
+      <rect x="14" y="8" width="104" height="58" rx="9" fill="#fff" stroke="#C8922E" stroke-width="1.6"/>
+      <line x1="26" y1="22" x2="106" y2="22" stroke="#E2DACB" stroke-width="2.4"/>
+      <line x1="26" y1="33" x2="106" y2="33" stroke="#E2DACB" stroke-width="2.4"/>
+      <line x1="26" y1="44" x2="106" y2="44" stroke="#E2DACB" stroke-width="2.4"/>
+      <line x1="26" y1="55" x2="80" y2="55" stroke="#E2DACB" stroke-width="2.4"/>
+      <circle cx="66" cy="37" r="11" fill="#FAF1DF" stroke="#C8922E" stroke-width="1.4"/>
+      <text x="66" y="41" font-size="12" font-weight="700" fill="#C8922E" text-anchor="middle">13</text>
+    </svg>
+    <div class="sn">business-canvas <span class="se">商业画布</span></div>
+    <p>All 13 dimensions filled: customer's customer, pain points, market sizing, business model, key assumptions &amp; validation.</p>
+  </div>
+  <div class="shape">
+    <svg width="132" height="74" viewBox="0 0 132 74">
+      <polygon points="66,8 92,26 82,58 50,58 40,26" fill="#fff" stroke="#1f6f5c" stroke-width="1.6"/>
+      <text x="66" y="30" font-size="9" font-weight="700" fill="#1f6f5c" text-anchor="middle">depth</text>
+      <text x="49" y="50" font-size="9" font-weight="700" fill="#1f6f5c" text-anchor="middle">breadth</text>
+      <text x="84" y="50" font-size="9" font-weight="700" fill="#1f6f5c" text-anchor="middle">traits</text>
+    </svg>
+    <div class="sn">personal-ip <span class="se">IP 定位</span></div>
+    <p>The cross-discipline triangle: depth × breadth × traits → the angle only they can take, plus 5 long-term tags.</p>
+  </div>
+  <div class="shape">
+    <svg width="132" height="74" viewBox="0 0 132 74">
+      <g fill="none" stroke="#B4502E" stroke-width="1.5">
+        <rect x="24" y="14" width="84" height="13" rx="4"/>
+        <rect x="34" y="32" width="74" height="9" rx="3" stroke-width="1.2"/>
+        <rect x="34" y="45" width="74" height="9" rx="3" stroke-width="1.2"/>
+        <line x1="28" y1="36" x2="28" y2="50"/>
+        <line x1="28" y1="36" x2="34" y2="36"/>
+        <line x1="28" y1="49" x2="34" y2="49"/>
+      </g>
+      <text x="66" y="68" font-size="9.5" font-weight="700" fill="#B4502E" text-anchor="middle">5 dims × 10 topics</text>
+    </svg>
+    <div class="sn">content-topic <span class="se">选题库</span></div>
+    <p>5 dimensions × ~2–3 sub-directions × 10 topics each = a topic library good for six months.</p>
+  </div>
+</div>
+<div class="variants">
+  <span class="vchip"><span class="vdot" style="background:#C8922E"></span>Business analysis</span>
+  <span class="vchip"><span class="vdot" style="background:#1f6f5c"></span>Personal IP</span>
+  <span class="vchip"><span class="vdot" style="background:#B4502E"></span>Content plan</span>
+  <span class="vchip"><span class="vdot" style="background:#3E6B8C"></span>Key assumptions &amp; validation</span>
+</div>
+
+<h2><span class="dot"></span>Multi-agent research</h2>
+<p class="sub">The transcript goes in; four agents each own one slice — research stays focused, not sprawling.</p>
+<div class="arch">
+  <div class="archcdn"><b>Interview transcript</b><br>Chunked ASR + meeting background as context</div>
+  <div class="archpipe"></div>
+  <div class="archfile">
+    <span class="ft">Multi-agent research team</span>
+    <div class="archrow">
+      <div class="archbox"><div class="bk">Industry</div><h4>Industry researcher</h4><p>Macro trends / market size / competitive landscape.</p></div>
+      <div class="archbox"><div class="bk">Competitors</div><h4>Competitor analyst</h4><p>Direct competitors / substitutes / differentiation.</p></div>
+      <div class="archbox"><div class="bk">Customer</div><h4>Customer-breakdown agent</h4><p>Customer's customer / pain points / three verticals.</p></div>
+      <div class="archbox"><div class="bk">Sizing</div><h4>Market-sizing agent</h4><p>Total / serviceable / obtainable market (TAM·SAM·SOM).</p></div>
+    </div>
+  </div>
+  <div class="archnote">
+    <span class="anote">Cross-validate results</span>
+    <span class="anote">No single-agent trust</span>
+    <span class="anote">Feeds the three sub-skills</span>
+  </div>
+</div>
+<p class="note">The key insight: single-pass ASR over 5+ minutes triggers attention collapse (a 24-minute pass broke around the 9-minute mark in the EP0013 run). Splitting into 7–8 minute segments and merging with offset timestamps runs 20–30 points above the meeting software's built-in transcript.</p>
+
+<h2><span class="dot"></span>Core features</h2>
+<div class="cards">
+  <div class="card"><h3>End-to-end orchestration</h3><p>One skill carries the run from raw recording all the way to a finished proposal page — you do not stitch the steps together.</p></div>
+  <div class="card"><h3>Chunked ASR</h3><p>7–8 minute segments avoid attention collapse, meeting background as context, 20–30 points above the meeting software.</p></div>
+  <div class="card"><h3>Three composable sub-skills</h3><p>Business canvas / personal IP / content topics, each usable on its own, with field tables from the EP0013 run.</p></div>
+  <div class="card"><h3>Redaction by default</h3><p>The synthesized page writes "a company in the XX business" — business type only, never the client name.</p></div>
+</div>
+
+<h2><span class="dot"></span>When to use</h2>
+<div class="two">
+  <div class="panel ok"><div class="pk">Good fit</div><h3>Have an interview, want the full package</h3>
+    <ul><li>Consultants, freelancers, one-person-company founders, BD, pre-sales</li><li>An interview recording or transcript you want turned into a deliverable report</li><li>The whole set: business canvas + personal IP + content plan</li></ul></div>
+  <div class="panel no"><div class="pk">Not for</div><h3>Cleanup only / no consulting output</h3>
+    <ul><li>Just cleaning up a transcript — use an ASR tool</li><li>A client check-in with no consulting output</li><li>A pure RFP response</li></ul></div>
+</div>
+
+<h2><span class="dot"></span>Quick start</h2>
+<div class="steps">
+  <div class="step"><div><h4>Install into your Claude Code skills directory</h4><pre>git clone https://github.com/xntj-ai/meeting-to-proposal.git ~/.claude/skills/meeting-to-proposal</pre></div></div>
+  <div class="step"><div><h4>Drop a client interview into the chat</h4><p>Drop the audio (ideally with the meeting software's transcript) into the conversation and say "use meeting-to-proposal to turn this interview into a full proposal" — Claude triggers it and runs the 7-step orchestration.</p></div></div>
+  <div class="step"><div><h4>Get a proposal page with the client redacted</h4><p>The four-section HTML is ready to hand off. Or skip Claude: paste <code>SKILL.md</code> into any LLM — the method is the thinking, not the tool.</p></div></div>
+</div>
+
+<footer>
+  <span>meeting-to-proposal · MIT License · © <a href="https://xntj.tv">张拼拼 · XNTJ</a></span>
+  <span><a href="https://github.com/xntj-ai/meeting-to-proposal">GitHub</a> · <a href="https://github.com/xntj-ai/ppvi">ppvi design system</a> · <a href="./index.zh.html">中文</a></span>
+</footer>
+
+</div></body></html>
